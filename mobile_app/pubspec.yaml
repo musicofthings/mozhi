@@ -1,0 +1,19 @@
+name: mozhi_mobile
+description: Mozhi mobile voice bridge client.
+publish_to: 'none'
+version: 0.1.0+1
+
+environment:
+  sdk: '>=3.3.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_webrtc: ^0.11.6
+  mobile_scanner: ^5.1.1
+  cryptography: ^2.7.0
+  qr_flutter: ^4.1.0
+  websocket_universal: ^1.2.6
+
+flutter:
+  uses-material-design: true

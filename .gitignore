@@ -1,0 +1,15 @@
+__pycache__/
+*.pyc
+.env
+.venv/
+build/
+dist/
+*.egg-info/
+logs/
+.DS_Store
+mobile_app/.dart_tool/
+mobile_app/.flutter-plugins
+mobile_app/.flutter-plugins-dependencies
+mobile_app/.packages
+mobile_app/build/
+mobile_app/ios/Pods/
