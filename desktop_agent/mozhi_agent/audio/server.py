@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import json
 from collections.abc import Awaitable, Callable
 
@@ -28,7 +29,12 @@ class AudioIngressServer:
         """Websocket lifecycle entrypoint."""
         session: SessionContext | None = None
         async for payload in websocket:
-            message = json.loads(payload)
+            try:
+                message = json.loads(payload)
+            except (json.JSONDecodeError, TypeError) as exc:
+                logger.warning("ws.invalid_payload", error=str(exc))
+                await websocket.send(json.dumps({"type": "error", "message": "invalid_json"}))
+                continue
             event_type = message.get("type")
             if event_type == "pair":
                 session = await self._handle_pairing(websocket, message)
@@ -68,6 +74,3 @@ async def run_server(host: str, port: int, server: AudioIngressServer) -> None:
     async with websockets.serve(server.handler, host, port, max_size=2**22):
         logger.info("audio.server.started", host=host, port=port)
         await asyncio.Future()
-
-
-import asyncio  # noqa: E402  # keep event loop dependency local to module end

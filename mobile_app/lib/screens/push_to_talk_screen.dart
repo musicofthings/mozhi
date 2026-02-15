@@ -18,20 +18,30 @@ class _PushToTalkScreenState extends State<PushToTalkScreen> {
   bool _streaming = false;
 
   Future<void> _pair() async {
-    final paired = await _pairingService.pairViaQr(context);
+    final paired = await _pairingService.pairViaQr();
     if (!mounted) return;
     setState(() => _paired = paired);
   }
 
   Future<void> _togglePtt(bool active) async {
     if (!_paired) return;
-    if (active) {
-      await _audioService.startStreaming();
-    } else {
-      await _audioService.stopStreaming();
+    try {
+      if (active) {
+        await _audioService.startStreaming();
+      } else {
+        await _audioService.stopStreaming();
+      }
+    } catch (e) {
+      debugPrint('PTT error: $e');
     }
     if (!mounted) return;
     setState(() => _streaming = active);
+  }
+
+  @override
+  void dispose() {
+    _audioService.dispose();
+    super.dispose();
   }
 
   @override

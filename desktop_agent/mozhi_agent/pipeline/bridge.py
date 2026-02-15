@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import asyncio
+import functools
 from datetime import UTC, datetime
 
 import structlog
@@ -32,8 +34,15 @@ class VoiceBridgePipeline:
         self._injector = injector
 
     async def handle_audio(self, pcm_bytes: bytes) -> None:
-        """Asynchronously process one decrypted audio chunk."""
-        transcript = self._transcriber.transcribe_pcm16_mono(pcm_bytes)
+        """Asynchronously process one decrypted audio chunk.
+
+        CPU-bound work (STT inference, UI confirmation, injection) is
+        dispatched via ``run_in_executor`` so the event loop stays responsive.
+        """
+        loop = asyncio.get_running_loop()
+        transcript = await loop.run_in_executor(
+            None, self._transcriber.transcribe_pcm16_mono, pcm_bytes,
+        )
         if not transcript.text:
             return
 
@@ -54,7 +63,12 @@ class VoiceBridgePipeline:
 
         decision = self._risk_filter.evaluate(transcript.text)
         if decision.needs_confirmation:
-            approved = confirm_injection(transcript.text, decision.keyword or "unknown")
+            approved = await loop.run_in_executor(
+                None,
+                functools.partial(
+                    confirm_injection, transcript.text, decision.keyword or "unknown",
+                ),
+            )
             self._risk_filter.append_audit(
                 ActionLogEntry(
                     ts_utc=datetime.now(UTC),
@@ -67,7 +81,12 @@ class VoiceBridgePipeline:
                 logger.warning("risk.blocked", keyword=decision.keyword)
                 return
 
-        self._injector.inject(transcript.text, press_enter=self._settings.auto_send)
+        await loop.run_in_executor(
+            None,
+            functools.partial(
+                self._injector.inject, transcript.text, press_enter=self._settings.auto_send,
+            ),
+        )
         self._risk_filter.append_audit(
             ActionLogEntry(
                 ts_utc=datetime.now(UTC),

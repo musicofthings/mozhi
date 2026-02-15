@@ -6,4 +6,8 @@ class AudioStreamService {
   Future<void> stopStreaming() async {
     // TODO: Flush audio buffer and close stream gracefully.
   }
+
+  void dispose() {
+    // TODO: Release mic resources and close transport connections.
+  }
 }

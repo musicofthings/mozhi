@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 from datetime import datetime
 from typing import Literal
 
@@ -49,8 +48,7 @@ class RiskDecision(BaseModel):
     keyword: str | None = None
 
 
-@dataclass(slots=True)
-class ActionLogEntry:
+class ActionLogEntry(BaseModel):
     """Audit log item for all user-impacting actions."""
 
     ts_utc: datetime
