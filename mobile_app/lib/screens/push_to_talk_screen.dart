@@ -18,42 +18,29 @@ class _PushToTalkScreenState extends State<PushToTalkScreen> {
   bool _streaming = false;
 
   Future<void> _pair() async {
-    try {
-      final bool paired = await _pairingService.pairViaQr(context);
-      if (!mounted) return;
-      setState(() => _paired = paired);
-    } catch (error) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Pairing failed: $error')),
-      );
-    }
+    final paired = await _pairingService.pairViaQr();
+    if (!mounted) return;
+    setState(() => _paired = paired);
   }
 
   Future<void> _togglePtt(bool active) async {
-    if (!_paired) {
-      return;
-    }
+    if (!_paired) return;
     try {
       if (active) {
         await _audioService.startStreaming();
       } else {
         await _audioService.stopStreaming();
       }
-      if (!mounted) return;
-      setState(() => _streaming = active);
-    } catch (error) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Audio stream failed: $error')),
-      );
-      setState(() => _streaming = false);
+    } catch (e) {
+      debugPrint('PTT error: $e');
     }
+    if (!mounted) return;
+    setState(() => _streaming = active);
   }
 
   @override
   void dispose() {
-    _audioService.disconnect();
+    _audioService.dispose();
     super.dispose();
   }
 

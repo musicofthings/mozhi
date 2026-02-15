@@ -5,15 +5,21 @@ from __future__ import annotations
 import platform
 
 from mozhi_agent.injection.base import BaseInjector
-from mozhi_agent.injection.macos import MacOSInjector
-from mozhi_agent.injection.windows import WindowsInjector
 
 
 def get_injector() -> BaseInjector:
-    """Return a supported platform injector instance."""
+    """Return a supported platform injector instance.
+
+    Platform-specific imports are deferred to avoid ImportError on
+    systems where the other platform's dependencies are absent.
+    """
     system = platform.system().lower()
     if system == "windows":
+        from mozhi_agent.injection.windows import WindowsInjector
+
         return WindowsInjector()
     if system == "darwin":
+        from mozhi_agent.injection.macos import MacOSInjector
+
         return MacOSInjector()
     raise NotImplementedError(f"Unsupported platform for input injection: {system}")

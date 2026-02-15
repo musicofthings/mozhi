@@ -19,7 +19,6 @@ class AgentSettings(BaseSettings):
 
     bind_host: str = "0.0.0.0"
     bind_port: int = 8765
-    advertised_host: str = "127.0.0.1"
 
     token_ttl_seconds: int = 900
     model_size: str = "small"

@@ -13,7 +13,6 @@ from mozhi_agent.observability.logging_utils import configure_logging
 from mozhi_agent.pipeline.bridge import VoiceBridgePipeline
 from mozhi_agent.risk.filter import RiskFilter
 from mozhi_agent.security.pairing import PairingManager
-from mozhi_agent.security.pairing_qr import build_pairing_payload, render_pairing_qr
 from mozhi_agent.stt.transcriber import WhisperTranscriber
 from mozhi_agent.ui.tray import start_tray
 
@@ -26,10 +25,6 @@ async def _async_main() -> None:
     start_tray()
 
     pairing = PairingManager(token_ttl_seconds=settings.token_ttl_seconds)
-    pairing_payload = build_pairing_payload(settings, pairing)
-    payload_json = render_pairing_qr(pairing_payload)
-    logger.info("pairing.qr.ready", payload=payload_json, png_path="pairing_qr.png")
-
     transcriber = WhisperTranscriber(
         model_size=settings.model_size,
         compute_type=settings.compute_type,

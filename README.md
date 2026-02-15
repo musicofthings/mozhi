@@ -21,9 +21,10 @@ Production-grade cross-platform voice bridge that captures speech on mobile, str
 │       └── models.py
 ├── mobile_app/
 │   └── lib/
-│       ├── models/
 │       ├── screens/
-│       └── services/
+│       ├── services/
+│       ├── models/
+│       └── widgets/
 ├── scripts/
 │   ├── build_macos.sh
 │   └── build_windows.ps1
@@ -40,15 +41,13 @@ Production-grade cross-platform voice bridge that captures speech on mobile, str
    python -m venv .venv
    source .venv/bin/activate
    pip install -U pip
-   pip install -e .
+   pip install -e .[tray]
    ```
-3. Copy `.env.example` to `.env` and set `MOZHI_ADVERTISED_HOST` to your desktop LAN IP.
+3. Copy `.env.example` to `.env` and tune values.
 4. Run agent:
    ```bash
    mozhi-agent
    ```
-
-At startup the desktop prints an ASCII QR in terminal and writes `pairing_qr.png` for mobile pairing.
 
 ## Mobile App Setup (Flutter)
 
@@ -58,16 +57,13 @@ At startup the desktop prints an ASCII QR in terminal and writes `pairing_qr.png
    flutter pub get
    flutter run
    ```
-3. Tap **Pair Desktop via QR** and scan the desktop pairing QR.
-4. Press and hold the mic button to stream encrypted PCM audio.
 
 ## Secure Pairing Flow
 
-1. Desktop generates QR containing websocket endpoint + desktop public key.
-2. Mobile scans QR and creates X25519 keypair.
-3. Mobile sends pairing request (`device_id`, `device_name`, client public key).
-4. Desktop derives shared key via X25519 and returns short-lived session token.
-5. Mobile encrypts every audio packet with AES-GCM using shared key and sends over websocket.
+1. Desktop shows QR containing websocket endpoint + desktop public key fingerprint.
+2. Mobile scans QR and sends pairing request (`device_id`, `device_name`, client public key).
+3. Desktop derives shared key via X25519 and returns short-lived session token.
+4. Mobile encrypts all audio packets with AES-GCM (shared key), includes token per session.
 
 ## Runtime Pipeline
 

@@ -7,9 +7,10 @@ import secrets
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 
-from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import x25519
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 
 
 @dataclass(slots=True)
@@ -39,17 +40,23 @@ class PairingManager:
         return base64.urlsafe_b64encode(public_key).decode("utf-8")
 
     def create_session(self, device_id: str, client_public_key_b64: str) -> SessionContext:
-        """Create authenticated session context by deriving shared secret."""
+        """Create authenticated session context by deriving shared secret via HKDF."""
         client_public_key = x25519.X25519PublicKey.from_public_bytes(
             base64.urlsafe_b64decode(client_public_key_b64)
         )
         shared_secret = self._private_key.exchange(client_public_key)
+        derived_key = HKDF(
+            algorithm=hashes.SHA256(),
+            length=32,
+            salt=None,
+            info=b"mozhi-audio-transport",
+        ).derive(shared_secret)
         token = secrets.token_urlsafe(32)
         session = SessionContext(
             device_id=device_id,
             token=token,
             expires_at_utc=datetime.now(UTC) + timedelta(seconds=self._token_ttl_seconds),
-            aes_key=shared_secret,
+            aes_key=derived_key,
         )
         self._sessions[token] = session
         return session

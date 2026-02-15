@@ -16,14 +16,12 @@ dependencies = [
   "pydantic-settings>=2.2",
   "python-dotenv>=1.0",
   "structlog>=24.1",
-  "qrcode>=7.4.2",
-  "Pillow>=10.2",
 ]
 
 [project.optional-dependencies]
 windows = ["pywinauto>=0.6.9", "pywin32>=306"]
 macos = ["pyobjc-core>=10.2", "pyobjc-framework-Cocoa>=10.2"]
-tray = ["pystray>=0.19"]
+tray = ["pystray>=0.19", "Pillow>=10.2"]
 
 [project.scripts]
 mozhi-agent = "mozhi_agent.main:run"
