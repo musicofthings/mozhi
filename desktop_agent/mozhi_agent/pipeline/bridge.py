@@ -19,7 +19,17 @@ logger = structlog.get_logger(__name__)
 
 
 class VoiceBridgePipeline:
-    """Processes PCM audio frames and executes controlled text injection."""
+    """Processes PCM audio frames and executes controlled text injection.
+
+    Incoming audio packets are accumulated in a buffer.  Once the buffer
+    reaches ``_buffer_threshold`` bytes (default 3 s of PCM16 mono @16 kHz)
+    the aggregated chunk is sent to the Whisper transcriber.  Call
+    ``flush_buffer()`` when a push-to-talk session ends to process the
+    remaining audio.
+    """
+
+    # 3 seconds of PCM16 mono @ 16 kHz → 16000 samples/s × 2 bytes × 3 s
+    _BUFFER_THRESHOLD = 16000 * 2 * 3
 
     def __init__(
         self,
@@ -32,9 +42,26 @@ class VoiceBridgePipeline:
         self._transcriber = transcriber
         self._risk_filter = risk_filter
         self._injector = injector
+        self._audio_buffer = bytearray()
 
     async def handle_audio(self, pcm_bytes: bytes) -> None:
-        """Asynchronously process one decrypted audio chunk.
+        """Buffer incoming decrypted PCM and transcribe when threshold is met."""
+        self._audio_buffer.extend(pcm_bytes)
+        if len(self._audio_buffer) < self._BUFFER_THRESHOLD:
+            return
+        chunk = bytes(self._audio_buffer)
+        self._audio_buffer.clear()
+        await self._process_chunk(chunk)
+
+    async def flush_buffer(self) -> None:
+        """Transcribe any remaining buffered audio (e.g. on PTT release)."""
+        if self._audio_buffer:
+            chunk = bytes(self._audio_buffer)
+            self._audio_buffer.clear()
+            await self._process_chunk(chunk)
+
+    async def _process_chunk(self, pcm_bytes: bytes) -> None:
+        """Run STT → risk evaluation → optional confirmation → injection.
 
         CPU-bound work (STT inference, UI confirmation, injection) is
         dispatched via ``run_in_executor`` so the event loop stays responsive.

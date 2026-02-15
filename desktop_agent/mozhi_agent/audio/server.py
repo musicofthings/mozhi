@@ -16,14 +16,21 @@ from mozhi_agent.security.pairing import PairingManager, SessionContext, Transpo
 logger = structlog.get_logger(__name__)
 
 AudioCallback = Callable[[bytes], Awaitable[None]]
+FlushCallback = Callable[[], Awaitable[None]]
 
 
 class AudioIngressServer:
     """Handles pairing, authentication, and encrypted audio packet receipt."""
 
-    def __init__(self, pairing: PairingManager, on_audio: AudioCallback) -> None:
+    def __init__(
+        self,
+        pairing: PairingManager,
+        on_audio: AudioCallback,
+        on_flush: FlushCallback | None = None,
+    ) -> None:
         self._pairing = pairing
         self._on_audio = on_audio
+        self._on_flush = on_flush
 
     async def handler(self, websocket: ServerConnection) -> None:
         """Websocket lifecycle entrypoint."""
@@ -47,6 +54,12 @@ class AudioIngressServer:
                         await websocket.send(json.dumps({"type": "error", "message": "invalid_token"}))
                         continue
                 await self._handle_audio_packet(message, session)
+                continue
+            if event_type == "flush":
+                if self._on_flush is not None:
+                    await self._on_flush()
+                await websocket.send(json.dumps({"type": "flush_ack"}))
+                continue
 
     async def _handle_pairing(self, websocket: ServerConnection, message: dict) -> SessionContext:
         req = PairingRequest.model_validate(message["payload"])

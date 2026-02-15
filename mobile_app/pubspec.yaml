@@ -9,11 +9,11 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  flutter_webrtc: ^0.11.6
   mobile_scanner: ^5.1.1
   cryptography: ^2.7.0
   qr_flutter: ^4.1.0
-  websocket_universal: ^1.2.6
+  web_socket_channel: ^3.0.1
+  record: ^5.1.2
 
 dev_dependencies:
   flutter_test:

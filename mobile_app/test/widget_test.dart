@@ -15,6 +15,7 @@ void main() {
 
     expect(find.text('Mozhi Push-to-Talk'), findsOneWidget);
     expect(find.text('Press and hold to stream audio securely'), findsOneWidget);
-    expect(find.text('Not paired'), findsOneWidget);
+    expect(find.text('Not paired — scan desktop QR'), findsOneWidget);
+    expect(find.text('Pair Desktop via QR'), findsOneWidget);
   });
 }
